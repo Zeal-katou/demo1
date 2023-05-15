@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+# 数据库数据源
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    username: root
+    password: root
+    url: jdbc:mysql://localhost:3306/db1?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  type-aliases-package: com.example.user.pojo   #   别名
+  mapper-locations: classpath:/mybatis/*.xml   #   xml文件
+
+logging:
+  file:
+    name: log/log.log
+  level:
+    root: info
+    wuhobin: debug
