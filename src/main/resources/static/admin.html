@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理</title>
+</head>
+<body>
+<div>
+    <div align="center">
+        <h1>用户管理</h1>
+        <input type="text" v-model="username" placeholder="请输入查询名称" >
+        <input type="button" value="搜索" @click="v.selectSearch(username)" >
+    </div>
+    <table id="dataTable" border="2" align="center"  style="margin-top: 10px">
+        <tr>
+            <th>id</th>
+            <th>账号</th>
+            <th>密码</th>
+            <th>操作</th>
+        </tr>
+        <tr v-for="users in arr">
+            <td>{{users.id}}</td>
+            <td>{{users.username}}</td>
+            <td>{{users.password}}</td>
+            <td v-if="admin">
+
+                <input type="button" value="删除" @click="v.delete(users.id)">
+                <a :href="'update.html?id='+users.id">修改</a>
+            </td>
+            <td v-else>
+                暂无权限
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" v-if="admin">
+                <a style="color: red;text-align: center" href="/add.html">添加用户</a>
+            </td>
+            <td colspan="4" v-else>
+                暂无权限
+            </td>
+        </tr>
+    </table>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+<script>
+    let v = new Vue({
+        el: "body>div",
+        data: {
+            users:{id:"",username:"",password:"",role:""},
+            username:"",
+            admin:false,
+            arr:[]
+        },
+        methods: {
+            delete(id){
+                axios.get("/delete?id="+id).then(function (response) {
+                    let success = response.data==2?false:true;
+                    if (success) {
+                        alert("删除成功！")
+                        location.href = "/admin.html";
+                    } else {
+                        alert("删除失败，用户不存在!");
+                    }
+                })
+            },
+            selectSearch(username){
+                //发出获取所有用户的请求
+                axios.get("/search?username="+username).then(function (response) {
+                    v.arr = response.data;
+                })
+            }
+        },
+        created:function () {
+            //发出获取所有用户的请求
+            axios.get("/select").then(function (response) {
+                v.arr = response.data;
+            })
+            //发请求获取当前登录的用户对象
+            axios.get("/remSelect").then(function (response) {
+                //服务器响应的数据有可能是user对象 也有可能是空字符串(服务器响应的是null但是传输到客户端后变成了"")
+                v.admin = response.data==1?false:true;
+            })
+
+
+        }
+    })
+</script>
+
+</body>
+</html>

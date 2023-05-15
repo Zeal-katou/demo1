@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>修改信息</title>
+</head>
+<body>
+<div align="center">
+    <h1>修改用户</h1>
+    编号：<input type="text" v-model="user.id" readonly><br>
+    账号：<input style="margin-top: 5px" type="text" v-model="user.username" placeholder="请输入用户名"><br>
+    密码：<input style="margin-top: 5px" type="password" v-model="user.password" placeholder="请输入密码"><br>
+    <input style="margin-top: 10px" type="submit" value="修改" @click="update()">
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+<script>
+
+    let v = new Vue({
+        el: "body>div",
+        data: {
+            user: {id:"",username: "", password: ""}
+
+        },
+        methods: {
+
+            update() {
+                axios.post("/update", v.user).then(function (response) {
+                    if (response.data == 1) {
+                        alert("用户修改成功！")
+                        location.href = "/admin.html";
+                    } else {
+                        alert("用户数据不存在!");
+                    }
+                })
+            }
+        },
+        created: function(){
+            //发出通过id获取用户详情的请求
+            axios.get("/selectById" + location.search).then(function (response) {
+                v.user = response.data;
+
+            })
+        }
+    })
+</script>
+</body>
+</html>

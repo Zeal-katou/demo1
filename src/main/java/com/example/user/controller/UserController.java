@@ -1,85 +1,99 @@
 package com.example.user.controller;
-import com.example.user.util.Result;
 
-import com.example.user.pojo.User;
-import com.example.user.service.UserService;
+import com.example.user.mapper.UserMapper;
+import com.example.user.pojo.dto.UserLoginDto;
+import com.example.user.pojo.dto.UserUpdateDto;
+import com.example.user.pojo.entity.User;
+import com.example.user.pojo.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-
 import java.util.List;
 
-@Controller
+@RestController
 public class UserController {
-
     @Autowired
-    private UserService userService;
+    UserMapper mapper;
 
-    // 进入登录页
-    @RequestMapping("/")
-    public String login() {
-        return "login";
+    @RequestMapping("/add")
+    public int add(@RequestBody User user) {
+        System.out.println(user);
+        if (user.getUsername() == null || user.getUsername().equals(" ") ||
+                user.getPassword() == null || user.getPassword().equals(" ")) {
+            // 用户名密码为空
+            return 3;
+        }
+        int row = mapper.selectByAdd(user);
+        if (row == 1) {
+            // 用户名已存在
+            return 2;
+        }
+        mapper.insert(user);
+        // 添加成功
+        return 1;
     }
 
-    // 处理登录请求
-    @PostMapping("/login")
-    public String login(String username, String password, HttpSession session) {
-        User user = userService.checkUserByUsernameAndPassword(username, password);
-        if (user != null) {
-            session.setAttribute("user", user);
-            return "redirect:/user/list";
+    @RequestMapping("/delete")
+    public int delete(int id) {
+        int row = mapper.deleteById(id);
+        if (row == 1) {
+            // 删除成功
+            return 1;
+        }
+        // 删除失败
+        return 2;
+    }
+
+    @RequestMapping("/login")
+    public int login(@RequestBody UserLoginDto user, HttpSession session) {
+        System.out.println("user = " + user);
+        UserVO u = mapper.selectByUsername(user.getUsername());
+        if (u != null) {
+            if (u.getPassword().equals(user.getPassword())) {
+                // 把当前登录的用户对象保存到当前客户端对应的会话对象里面
+                session.setAttribute("user", u);
+                return 1; // 登录成功
+            }
+            return 2; // 密码错误
+        }
+        return 3; // 用户名不存在
+    }
+
+    @RequestMapping("/search")
+    public List<User> selectSearch(String username) {
+        List<User> users = mapper.selectSearch(username);
+        System.out.println(users);
+        return users;
+    }
+
+    @RequestMapping("/select")
+    public List<User> selectAll() {
+        return mapper.selectAll();
+    }
+
+    @RequestMapping("/remSelect")
+    public int remSelect(HttpSession session) {
+        UserVO user = (UserVO) session.getAttribute("user");
+        System.out.println(user);
+        return user.getRole();
+    }
+
+    @RequestMapping("/selectById")
+    public UserUpdateDto selectById(User user) {
+        UserUpdateDto userDto = mapper.selectById(user.getId());
+        return userDto;
+    }
+
+    @RequestMapping("/update")
+    public int update(@RequestBody UserUpdateDto userUpdateDto) {
+        System.out.println(userUpdateDto);
+        int row = mapper.update(userUpdateDto);
+        if (row == 1) {
+            return 1;
         } else {
-            return "login";
+            return 2;
         }
     }
-    // 用户列表页面
-    @GetMapping("/user/list")
-    public String list(Model model) {
-        List<User> userList = userService.selectAll();
-        model.addAttribute("userList", userList);
-        return "list";
-    }
-
-    // 进入添加用户页面
-    @GetMapping("/user/add")
-    public String toAdd() {
-        return "add";
-    }
-
-    //添加用户
-    @PostMapping("/add")
-    public Result add(@RequestBody User user) {
-        int result = userService.add(user);
-        if (result > 0) {
-            return Result.success("添加用户成功！");
-        } else {
-            return Result.error("添加用户失败！");
-        }
-    }
-
-    // 进入修改用户页面
-    @GetMapping("/user/edit/{id}")
-    public String toEdit(@PathVariable("id") int id, Model model) {
-        List<User> user = userService.selectById(String.valueOf(id));
-        model.addAttribute("user", user);
-        return "edit";
-    }
-
-    // 处理修改用户请求
-    @PutMapping("/user/edit")
-    public String edit(User user) {
-        userService.update(user);
-        return "redirect:/user/list";
-    }
-
-    // 处理删除用户请求
-    @DeleteMapping("/user/delete/{id}")
-    public String delete(@PathVariable("id") int id) {
-        userService.deleteById(id);
-        return "redirect:/user/list";
-    }
-
 }
+
